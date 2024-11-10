@@ -1,4 +1,4 @@
-// define pin thingies on arduino
+// define pins on arduino
 const int trigPin = 13;
 const int echoPin = 12;
 
@@ -8,12 +8,31 @@ const int greenLED = 10;
 const int yellowLED  = 9;
 const int redLED = 8;
 
+const int button = 6;
+int buttonState = HIGH;
+int lastButtonState = HIGH;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+
 long duration;
 double distance;
 
 
-int noteFrequencies[] = {131, 147, 165, 175, 196, 220, 247, 262, 294, 330, 249, 392, 440, 494, 523};
 double noteDistances[] = {1.5, 2.25, 3, 3.75, 4.5, 5.25, 6, 6.75, 7.5, 8.25, 9, 9.75, 10.5, 11.25, 12};
+
+int CMajor[] = {131, 147, 165, 175, 196, 220, 247, 262, 294, 330, 249, 392, 440, 494, 523};
+int Cminor[] = {131, 147, 156, 175, 196, 208, 233, 262, 294, 311, 349, 392, 415, 466, 523};
+int MelMinor[] = {131, 147, 156, 175, 196, 220, 247, 262, 294, 311, 349, 392, 440, 494, 523};
+int HarMinor[] = {131, 147, 156, 175, 196, 208, 247, 262, 294, 311, 249, 392, 415, 494, 523};
+int WhoTone[] = {131, 147, 165, 185, 208, 233, 262, 294, 330, 370, 415, 466, 523}; 
+int blues[] = {131, 156, 175, 185, 196, 233, 262, 311, 349, 370, 392, 466, 523};
+
+int* scales[] = {CMajor, Cminor, MelMinor, HarMinor, WhoTone, blues};
+int scaleSizes[] = {15, 15, 15, 15, 13, 13}; // define # notes per scale
+int numScales = sizeof(scales) / sizeof(scales[0]);
+
+int* currentScale = scales[0];
+int currentIndex = 0;
 
 
 void setup() {
@@ -24,6 +43,7 @@ void setup() {
   pinMode(greenLED, OUTPUT);
   pinMode(yellowLED, OUTPUT);
   pinMode(redLED, OUTPUT);
+  pinMode(button, INPUT_PULLUP);
 
   // Set everything low initially
   digitalWrite(buzzer, LOW);
@@ -32,11 +52,28 @@ void setup() {
   digitalWrite(redLED, LOW);
 
   Serial.begin(9600); 
+  Serial.println("Starting up!");
 
 }
 
 
 void loop() {
+  int reading = digitalRead(button);
+
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading == LOW && buttonState == HIGH) {
+      Serial.println("Button Pressed!");
+      changeScale();
+    }
+    buttonState = reading;
+  }
+  lastButtonState = reading;
+
+
   // reset sensor
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -51,8 +88,6 @@ void loop() {
   
   // distance in inches
   distance = duration * 0.034 / 2 / 2.54;
-
-
 
   if(distance < 13){
      digitalWrite(greenLED, HIGH);
@@ -75,23 +110,28 @@ void loop() {
 
 
    int note = -1;
-   for (int i = 0; i < 16; i++) {
+   int scaleSize = scaleSizes[currentIndex];
+   for (int i = 0; i < scaleSize; i++) {
     if (distance < noteDistances[i]) {
-      note = noteFrequencies[i];
+      note = currentScale[i];
       break;
     }
    }
 
    if (note != -1) {
     tone(buzzer, note, 100);
-    Serial.print("Distance");
-    Serial.print(distance);
-    Serial.println("");
-    Serial.print("Note");
-    Serial.print(note);
    } else {
     noTone(buzzer);
    }
 
    delay(80);
+}
+
+
+void changeScale() {
+  currentIndex = (currentIndex + 1) % numScales;
+  currentScale = scales[currentIndex];
+
+  Serial.print("Switched to scale index: ");
+  Serial.println(currentIndex);
 }
