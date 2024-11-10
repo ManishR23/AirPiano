@@ -10,9 +10,9 @@ LEDs not lighting up: Ensure you have correctly connected each LED with a 220Ω 
 Buzzer not playing tones: Check the buzzer's connection to the correct pin and test it with a simple tone program.
 Ultrasonic sensor not detecting distance: Verify the sensor’s wiring and orientation. The sensor should be pointed towards the area where your hand will be detected.
 
-Additional Features
+Additional Features:
 Modify the code to add more tones or play longer melodies as you move your hand in front of the sensor.
 Adjust the distance ranges to suit your preferences for how far the sensor should detect the hand for each tone.
 
-License
+License: 
 This project is open-source. You can freely use, modify, and distribute it under the terms of the MIT License.
